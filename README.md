@@ -28,7 +28,7 @@ The private-repository workflow is manual: run **Build ArmadaOS Freedom Anland R
 
 ## Build with GitHub Actions
 
-The `.github/workflows/build-rootfs.yml` workflow is manually triggered from the repository's Actions tab. It uses a native ARM64 runner, checks for 50 GB free space, and uploads the rootfs, SHA-256, and provenance as an artifact retained for one day. The repository plan must provide ARM64 runners and enough artifact storage.
+The `.github/workflows/build-rootfs.yml` workflow is manually triggered from the repository's Actions tab. It uses a native ARM64 runner, checks for 40 GB free space, and uploads the rootfs, SHA-256, and provenance as an artifact retained for one day. The repository plan must provide ARM64 runners and enough artifact storage.
 
 ## Defaults and first start
 

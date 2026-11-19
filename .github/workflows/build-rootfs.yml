@@ -42,8 +42,8 @@ jobs:
           docker buildx inspect --bootstrap
           df -h /
           available_kb="$(df -Pk / | awk 'NR == 2 {print $4}')"
-          if (( available_kb < 50000000 )); then
-            printf 'At least 50 GB free disk is recommended; only %s KB is available.\n' "$available_kb" >&2
+          if (( available_kb < 40000000 )); then
+            printf 'At least 40 GB free disk is recommended; only %s KB is available.\n' "$available_kb" >&2
             exit 1
           fi
 
