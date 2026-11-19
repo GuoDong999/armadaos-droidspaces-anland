@@ -1,0 +1,65 @@
+name: Build ArmadaOS Freedom Anland RootFS
+
+on:
+  workflow_dispatch:
+    inputs:
+      armada_image:
+        description: ARM64 ArmadaOS Freedom container image reference
+        required: true
+        type: string
+        default: ghcr.io/armadaos-freedom/armadaos-freedom@sha256:26e4e9d4b76cb194c8852daada2d257ab7e20078611dd2a6bb2911fe4f6a6a46
+
+permissions:
+  contents: read
+
+jobs:
+  build-rootfs:
+    name: Build ARM64 rootfs
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+    steps:
+      - name: Check out adapter
+        uses: actions/checkout@v5
+
+      - name: Check out Droidspaces rootfs builder
+        uses: actions/checkout@v5
+        with:
+          repository: Goldzxcbug/Droidspaces-rootfs-Desktop-builder
+          ref: 5017a8862874adea23862bb32b67cfcfec174dfb
+          path: source/droidspaces-rootfs-builder
+
+      - name: Reclaim runner disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/share/powershell /usr/local/share/chromium
+          sudo apt-get clean
+          docker system prune --all --force
+
+      - name: Check builder capacity
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker info
+          docker buildx inspect --bootstrap
+          df -h /
+          available_kb="$(df -Pk / | awk 'NR == 2 {print $4}')"
+          if (( available_kb < 50000000 )); then
+            printf 'At least 50 GB free disk is recommended; only %s KB is available.\n' "$available_kb" >&2
+            exit 1
+          fi
+
+      - name: Build rootfs
+        env:
+          ARMADA_IMAGE: ${{ inputs.armada_image }}
+        run: ./build-rootfs.sh
+
+      - name: Upload rootfs artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ArmadaOS-Freedom-Anland-Droidspaces-aarch64
+          path: |
+            dist/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz
+            dist/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.sha256
+            dist/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.source
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
