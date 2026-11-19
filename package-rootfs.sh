@@ -86,7 +86,7 @@ config_blocks=$((1 + (config_size + 511) / 512))
 {
   dd if="$tmp_dir/config.tar" bs=512 count="$config_blocks" status=none
   cat "$input_tar"
-} | xz -T0 -9 -c > "$pending_output"
+} | xz -T0 -6 -c > "$pending_output"
 xz -t "$pending_output"
 tar -tJf "$pending_output" > "$tmp_dir/final-members"
 read -r first_member < "$tmp_dir/final-members"

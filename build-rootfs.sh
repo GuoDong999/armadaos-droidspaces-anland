@@ -49,7 +49,13 @@ grep -qF 'linux/arm64' <<< "$builder_info" || {
 
 mkdir -p -- "$OUTPUT_DIR"
 tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/armada-droidspaces.XXXXXXXX")"
-cleanup() { rm -rf -- "$tmp_dir"; }
+local_image='armadaos-freedom:droidspaces-rootfs'
+container_id=''
+cleanup() {
+  if [[ -n "$container_id" ]]; then docker rm -f "$container_id" >/dev/null 2>&1 || true; fi
+  docker image rm "$local_image" >/dev/null 2>&1 || true
+  rm -rf -- "$tmp_dir"
+}
 trap cleanup EXIT
 
 tui_dir="$tmp_dir/tui"
@@ -89,9 +95,16 @@ docker buildx build \
   --build-arg DESKTOP_AUTOSTART=false \
   --build-arg USERNAME=armada \
   --file "$ROOT_DIR/Containerfile" \
-  --target export \
-  --output "type=tar,dest=$tmp_dir/rootfs.tar" \
+  --target armada \
+  --load \
+  --tag "$local_image" \
   "$BUILDER_SOURCE"
+
+container_id="$(docker create --platform linux/arm64 "$local_image")"
+docker export --output "$tmp_dir/rootfs.tar" "$container_id"
+docker rm "$container_id" >/dev/null
+container_id=''
+docker image rm "$local_image" >/dev/null
 
 DROIDSPACES_TUI_REVISION="$tui_revision" \
 ANLAND_REPOSITORY="$ANLAND_REPOSITORY" \
