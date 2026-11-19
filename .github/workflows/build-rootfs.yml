@@ -54,14 +54,14 @@ jobs:
         run: |
           set -euo pipefail
           version=0.22.1
-          archive="$RUNNER_TEMP/go-containerregistry_Linux_x86_64.tar.gz"
+          archive="$RUNNER_TEMP/go-containerregistry_Linux_arm64.tar.gz"
           curl --http1.1 -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
-            "https://github.com/google/go-containerregistry/releases/download/v${version}/go-containerregistry_Linux_x86_64.tar.gz" \
+            "https://github.com/google/go-containerregistry/releases/download/v${version}/go-containerregistry_Linux_arm64.tar.gz" \
             -o "$archive"
           curl --http1.1 -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
             "https://github.com/google/go-containerregistry/releases/download/v${version}/checksums.txt" \
             -o "$RUNNER_TEMP/crane-checksums.txt"
-          expected="$(awk -v f='go-containerregistry_Linux_x86_64.tar.gz' '$2 == f {print $1}' "$RUNNER_TEMP/crane-checksums.txt")"
+          expected="$(awk -v f='go-containerregistry_Linux_arm64.tar.gz' '$2 == f {print $1}' "$RUNNER_TEMP/crane-checksums.txt")"
           test "${#expected}" -eq 64
           printf '%s  %s\n' "$expected" "$archive" | sha256sum -c -
           tar -xzf "$archive" -C "$RUNNER_TEMP" crane
