@@ -100,7 +100,7 @@ docker buildx build \
   --tag "$local_image" \
   "$BUILDER_SOURCE"
 
-container_id="$(docker create --platform linux/arm64 "$local_image")"
+container_id="$(docker create --platform linux/arm64 "$local_image" /bin/true)"
 docker export --output "$tmp_dir/rootfs.tar" "$container_id"
 docker rm "$container_id" >/dev/null
 container_id=''
