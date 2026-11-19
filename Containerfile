@@ -4,7 +4,7 @@ FROM ${ARMADA_IMAGE} AS armada
 ARG DESKTOP=kde
 ARG DISPLAY_BACKEND=anland-wayland
 ARG DESKTOP_AUTOSTART=false
-ARG USERNAME=armada
+ARG USERNAME=z
 ARG DROIDSPACES_TUI_REVISION=unknown
 ARG ANLAND_REPOSITORY=Goldzxcbug/droidspaces-package
 ARG ANLAND_RELEASE_TAG=anland-kde-packages
@@ -43,10 +43,16 @@ fi
 
 for group in input video tty wheel audio render; do
     getent group "$group" >/dev/null && usermod -aG "$group" root || true
-    getent group "$group" >/dev/null && usermod -aG "$group" armada || true
+    getent group "$group" >/dev/null && usermod -aG "$group" "$USERNAME" || true
 done
+if ! id "$USERNAME" >/dev/null 2>&1; then
+    useradd -m -s /bin/bash "$USERNAME"
+    for group in input video tty wheel audio render; do
+        getent group "$group" >/dev/null && usermod -aG "$group" "$USERNAME" || true
+    done
+fi
 usermod -aG aid_inet,aid_net_raw,aid_net_admin,droidspaces-gpu root
-usermod -aG aid_inet,aid_net_raw,aid_net_admin,droidspaces-gpu armada
+usermod -aG aid_inet,aid_net_raw,aid_net_admin,droidspaces-gpu "$USERNAME"
 passwd -l armada
 sed -i 's/^hosts:.*/hosts: files dns myhostname/' /etc/nsswitch.conf
 
@@ -106,6 +112,15 @@ ln -sfn /etc/systemd/system/ds-dhcp.service /etc/systemd/system/multi-user.targe
 
 rm -rf /var/cache/dnf /var/cache/libdnf5 /var/log/journal/*
 EOF_RUN
+
+RUN --mount=type=secret,id=rootfs_password,target=/run/secrets/rootfs_password \
+    <<'EOF_PASSWORD'
+set -euo pipefail
+password="$(cat /run/secrets/rootfs_password)"
+[[ -n "$password" && "$password" != *$'\n'* ]]
+printf '%s:%s\n' "$USERNAME" "$password" | chpasswd
+unset password
+EOF_PASSWORD
 
 RUN --mount=type=bind,source=scripts,target=/run/droidspaces-scripts \
     --mount=type=bind,from=droidspaces-tui,target=/run/droidspaces-tui \

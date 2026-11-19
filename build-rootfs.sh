@@ -9,6 +9,16 @@ OUTPUT_DIR="${OUTPUT_DIR:-$ROOT_DIR/dist}"
 OUTPUT_FILE="${OUTPUT_FILE:-$OUTPUT_DIR/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz}"
 ANLAND_REPOSITORY="${ANLAND_REPOSITORY:-Goldzxcbug/droidspaces-package}"
 ANLAND_RELEASE_TAG="${ANLAND_RELEASE_TAG:-anland-kde-packages}"
+ROOTFS_USERNAME="${ROOTFS_USERNAME:-z}"
+
+[[ "$ROOTFS_USERNAME" =~ ^[a-z_][a-z0-9_-]{0,30}\$?$ ]] || {
+  printf 'ROOTFS_USERNAME is not a valid Linux account name.\n' >&2
+  exit 1
+}
+[[ -n "${ROOTFS_PASSWORD:-}" ]] || {
+  printf 'Set ROOTFS_PASSWORD in the environment or as a GitHub Actions secret.\n' >&2
+  exit 1
+}
 
 [[ "$ARMADA_IMAGE" =~ ^ghcr\.io/armadaos-freedom/armadaos-freedom(@sha256:[0-9a-f]{64}|:[A-Za-z0-9._-]+)$ || "$ARMADA_IMAGE" == armadaos-freedom:flattened ]] || {
   printf 'ARMADA_IMAGE must be the ArmadaOS Freedom GHCR image or the workflow flattened image.\n' >&2
@@ -93,7 +103,8 @@ docker buildx build \
   --build-arg DESKTOP=kde \
   --build-arg DISPLAY_BACKEND=anland-wayland \
   --build-arg DESKTOP_AUTOSTART=false \
-  --build-arg USERNAME=armada \
+  --build-arg "USERNAME=$ROOTFS_USERNAME" \
+  --secret id=rootfs_password,env=ROOTFS_PASSWORD \
   --file "$ROOT_DIR/Containerfile" \
   --target armada \
   --load \

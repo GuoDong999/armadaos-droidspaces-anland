@@ -8,6 +8,11 @@ on:
         required: true
         type: string
         default: ghcr.io/armadaos-freedom/armadaos-freedom@sha256:26e4e9d4b76cb194c8852daada2d257ab7e20078611dd2a6bb2911fe4f6a6a46
+      rootfs_username:
+        description: Linux account name inside the rootfs
+        required: true
+        type: string
+        default: z
 
 permissions:
   contents: read
@@ -47,6 +52,15 @@ jobs:
             exit 1
           fi
 
+      - name: Check rootfs password secret
+        env:
+          ROOTFS_PASSWORD: ${{ secrets.ROOTFS_PASSWORD }}
+        run: |
+          if [[ -z "${ROOTFS_PASSWORD:-}" ]]; then
+            printf 'Configure the repository Actions secret ROOTFS_PASSWORD before building.\n' >&2
+            exit 1
+          fi
+
       - name: Flatten ArmadaOS OCI layers
         env:
           ARMADA_IMAGE_SOURCE: ${{ inputs.armada_image }}
@@ -74,6 +88,8 @@ jobs:
         env:
           ARMADA_IMAGE: armadaos-freedom:flattened
           ARMADA_IMAGE_SOURCE: ${{ inputs.armada_image }}
+          ROOTFS_USERNAME: ${{ inputs.rootfs_username }}
+          ROOTFS_PASSWORD: ${{ secrets.ROOTFS_PASSWORD }}
         run: ./build-rootfs.sh
 
       - name: Upload rootfs artifact
