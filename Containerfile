@@ -109,9 +109,17 @@ EOF_RUN
 
 RUN --mount=type=bind,source=scripts,target=/run/droidspaces-scripts \
     --mount=type=bind,from=droidspaces-tui,target=/run/droidspaces-tui \
-    DESKTOP="$DESKTOP" DISPLAY_BACKEND="$DISPLAY_BACKEND" \
-    bash /run/droidspaces-scripts/install-rootfs-tools.sh \
-      --tui-dir /run/droidspaces-tui --desktop "$DESKTOP" --display-backend "$DISPLAY_BACKEND"
+    bash -euo pipefail -c '\
+      staging=/tmp/droidspaces-rootfs-tools; \
+      mkdir -p "$staging/etc"; \
+      cp /etc/os-release "$staging/etc/os-release"; \
+      sed -i -E "s/^ID=\\\"?armada\\\"?$/ID=fedora/" "$staging/etc/os-release"; \
+      DESKTOP="$DESKTOP" DISPLAY_BACKEND="$DISPLAY_BACKEND" \
+        bash /run/droidspaces-scripts/install-rootfs-tools.sh \
+          --root "$staging" --tui-dir /run/droidspaces-tui \
+          --desktop "$DESKTOP" --display-backend "$DISPLAY_BACKEND"; \
+      cp -a "$staging"/. /; \
+      rm -rf "$staging"'
 
 RUN --mount=type=bind,from=anland-kde,target=/run/anland-kde,ro \
     cp -a /run/anland-kde/. /tmp/anland-kde.ArmadaDroidspaces && \
