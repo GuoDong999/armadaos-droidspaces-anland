@@ -74,7 +74,6 @@ anland_sha256="$(awk -F= '$1 == "ANLAND_ARCHIVE_SHA256" {print substr($0, index(
 
 printf 'Building ARM64 ArmadaOS rootfs with Anland KDE revision %s\n' "$anland_revision"
 docker buildx build \
-  --pull \
   --platform linux/arm64 \
   --build-context "droidspaces-tui=$tui_dir" \
   --build-context "anland-kde=$anland_context" \
