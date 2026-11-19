@@ -52,15 +52,6 @@ jobs:
             exit 1
           fi
 
-      - name: Check rootfs password secret
-        env:
-          ROOTFS_PASSWORD: ${{ secrets.ROOTFS_PASSWORD }}
-        run: |
-          if [[ -z "${ROOTFS_PASSWORD:-}" ]]; then
-            printf 'Configure the repository Actions secret ROOTFS_PASSWORD before building.\n' >&2
-            exit 1
-          fi
-
       - name: Flatten ArmadaOS OCI layers
         env:
           ARMADA_IMAGE_SOURCE: ${{ inputs.armada_image }}

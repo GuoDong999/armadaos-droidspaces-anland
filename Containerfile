@@ -113,13 +113,16 @@ ln -sfn /etc/systemd/system/ds-dhcp.service /etc/systemd/system/multi-user.targe
 rm -rf /var/cache/dnf /var/cache/libdnf5 /var/log/journal/*
 EOF_RUN
 
-RUN --mount=type=secret,id=rootfs_password,target=/run/secrets/rootfs_password \
+RUN --mount=type=secret,id=rootfs_password,target=/run/secrets/rootfs_password,required=false \
     <<'EOF_PASSWORD'
 set -euo pipefail
-password="$(cat /run/secrets/rootfs_password)"
-[[ -n "$password" && "$password" != *$'\n'* ]]
-printf '%s:%s\n' "$USERNAME" "$password" | chpasswd
-unset password
+passwd -l "$USERNAME"
+if [[ -s /run/secrets/rootfs_password ]]; then
+    password="$(cat /run/secrets/rootfs_password)"
+    [[ "$password" != *$'\n'* ]]
+    printf '%s:%s\n' "$USERNAME" "$password" | chpasswd
+    unset password
+fi
 EOF_PASSWORD
 
 RUN --mount=type=bind,source=scripts,target=/run/droidspaces-scripts \
