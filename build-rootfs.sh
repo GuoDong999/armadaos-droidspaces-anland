@@ -4,13 +4,18 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 BUILDER_SOURCE="$ROOT_DIR/source/droidspaces-rootfs-builder"
 ARMADA_IMAGE="${ARMADA_IMAGE:-ghcr.io/armadaos-freedom/armadaos-freedom@sha256:26e4e9d4b76cb194c8852daada2d257ab7e20078611dd2a6bb2911fe4f6a6a46}"
+ARMADA_IMAGE_SOURCE="${ARMADA_IMAGE_SOURCE:-$ARMADA_IMAGE}"
 OUTPUT_DIR="${OUTPUT_DIR:-$ROOT_DIR/dist}"
 OUTPUT_FILE="${OUTPUT_FILE:-$OUTPUT_DIR/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz}"
 ANLAND_REPOSITORY="${ANLAND_REPOSITORY:-Goldzxcbug/droidspaces-package}"
 ANLAND_RELEASE_TAG="${ANLAND_RELEASE_TAG:-anland-kde-packages}"
 
-[[ "$ARMADA_IMAGE" =~ ^ghcr\.io/armadaos-freedom/armadaos-freedom(@sha256:[0-9a-f]{64}|:[A-Za-z0-9._-]+)$ ]] || {
-  printf 'ARMADA_IMAGE must reference the ArmadaOS Freedom GHCR image by digest or tag.\n' >&2
+[[ "$ARMADA_IMAGE" =~ ^ghcr\.io/armadaos-freedom/armadaos-freedom(@sha256:[0-9a-f]{64}|:[A-Za-z0-9._-]+)$ || "$ARMADA_IMAGE" == armadaos-freedom:flattened ]] || {
+  printf 'ARMADA_IMAGE must be the ArmadaOS Freedom GHCR image or the workflow flattened image.\n' >&2
+  exit 1
+}
+[[ "$ARMADA_IMAGE_SOURCE" =~ ^ghcr\.io/armadaos-freedom/armadaos-freedom(@sha256:[0-9a-f]{64}|:[A-Za-z0-9._-]+)$ ]] || {
+  printf 'ARMADA_IMAGE_SOURCE must reference the ArmadaOS Freedom GHCR image.\n' >&2
   exit 1
 }
 [[ -x "$BUILDER_SOURCE/scripts/sync-tui.sh" ]] || {
@@ -98,6 +103,6 @@ ANLAND_ARCHIVE_SHA256="$anland_sha256" \
   "$ROOT_DIR/package-rootfs.sh" \
     "$tmp_dir/rootfs.tar" \
     "$OUTPUT_FILE" \
-    "$ARMADA_IMAGE" \
+    "$ARMADA_IMAGE_SOURCE" \
     "$tui_revision"
 printf 'Created %s\n' "$OUTPUT_FILE"
