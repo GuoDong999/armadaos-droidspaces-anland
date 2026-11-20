@@ -809,8 +809,7 @@ bash -n /usr/libexec/armada/container-request /usr/libexec/armada/session-contro
 python3 -c 'from gi.repository import Gio, GLib; Gio.DBusNodeInfo.new_for_xml("<node/>")'
 grep -q ANLAND_SKIP_IMPLICIT_SYNC_WAIT /usr/libexec/armada/armada-plasma-session
 grep -q armada_wait_gamescope_startup /usr/share/gamescope-session-plus/gamescope-session-plus
-test -x /usr/libexec/gamescope-anland/startup.sh
-gamescope --help 2>&1 | grep -qi anland
+# The Freedom image's gamescope is replaced by the pinned Anland build below.
 EOF_ENABLE_SESSION
 
 ARG ANLAND_REPOSITORY=https://github.com/SuperTurtleDev/anland.git
