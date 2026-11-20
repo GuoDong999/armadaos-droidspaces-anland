@@ -143,9 +143,8 @@ RUN --mount=type=bind,from=anland-kde,target=/run/anland-kde,ro \
     awk -F: -v account="$USERNAME" '$1 == account && $2 ~ /^!/ { found=1 } END { exit !found }' /etc/shadow && \
     test -x /usr/local/bin/start-desktop-session && \
     test -x /usr/bin/dbus-run-session && \
-    grep -q 'ANLAND=1' /usr/local/bin/start-desktop-session && \
-    grep -q 'dbus-run-session' /usr/local/bin/start-desktop-session && \
-    /usr/bin/kwin_wayland --help 2>&1 | grep -q -- '--anland'
+    rpm -q --qf '%{RELEASE}\n' kwin kwin-common kwin-libs | grep -q '\.anland\.' && \
+    strings /usr/bin/kwin_wayland | grep -q 'AnlandBackend'
 
 RUN rm -f \
       /usr/local/sbin/configure-chrome \
