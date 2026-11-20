@@ -47,10 +47,10 @@ jobs:
           test -f "$rootfs"
           test -f "$checksum"
           test -f "$provenance"
-          # Older build artifacts record the original dist/ path in the sidecar.
-          sed 's#  dist/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz#  release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz#' \
-            "$checksum" > release-assets/verified.sha256
-          sha256sum -c release-assets/verified.sha256
+          # Build sidecars may contain a runner-local path; compare the recorded digest, not that path.
+          expected="$(awk 'NR == 1 {print $1}' "$checksum")"
+          actual="$(sha256sum "$rootfs" | awk '{print $1}')"
+          [[ "$expected" =~ ^[0-9a-f]{64}$ && "$expected" == "$actual" ]]
           tar -tJf "$rootfs" > release-assets/members
           grep -Fxq container.config release-assets/members
           tar -xOf "$rootfs" container.config > release-assets/container.config
