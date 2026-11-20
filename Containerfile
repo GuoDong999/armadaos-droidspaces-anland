@@ -48,7 +48,7 @@ done
 # Match the reference Armada container's graphical/input/audio groups.
 getent group pipewire >/dev/null || groupadd -r pipewire
 getent group gamemode >/dev/null || groupadd -r gamemode
-input_device_group="$(getent group 1004 | cut -d: -f1)"
+input_device_group="$(getent group 1004 | cut -d: -f1 || true)"
 if [ -z "$input_device_group" ]; then groupadd -g 1004 -r armada-input; input_device_group=armada-input; fi
 for group in pipewire gamemode seat "$input_device_group"; do
     getent group "$group" >/dev/null && usermod -aG "$group" "$USERNAME" || true
