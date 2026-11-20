@@ -44,7 +44,7 @@ fi
   printf 'Invalid Droidspaces TUI revision.\n' >&2
   exit 1
 }
-[[ -f "$input_tar" ]] || { printf 'Rootfs tar not found: %s\n' "$input_tar" >&2; exit 1; }
+[[ "$input_tar" == - || -f "$input_tar" ]] || { printf 'Rootfs tar not found: %s\n' "$input_tar" >&2; exit 1; }
 
 for tool in tar xz sha256sum dd grep; do
   command -v "$tool" >/dev/null 2>&1 || {
@@ -62,14 +62,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-tar -tf "$input_tar" > "$tmp_dir/input-members"
-for member in etc/os-release usr/lib/systemd/systemd usr/bin/bash; do
-  if ! grep -Eq "(^|/)${member}$" "$tmp_dir/input-members"; then
-    printf 'Rootfs tar is missing required path: %s\n' "$member" >&2
-    exit 1
-  fi
-done
-
 cat > "$tmp_dir/container.config" <<'EOF'
 # Droidspaces defaults for ArmadaOS Freedom ARM64
 net_mode=nat
@@ -83,10 +75,11 @@ tar --format=ustar --owner=0 --group=0 --numeric-owner \
   -cf "$tmp_dir/config.tar" -C "$tmp_dir" container.config
 config_size="$(wc -c < "$tmp_dir/container.config")"
 config_blocks=$((1 + (config_size + 511) / 512))
-{
-  dd if="$tmp_dir/config.tar" bs=512 count="$config_blocks" status=none
-  cat "$input_tar"
-} | xz -T0 -6 -c > "$pending_output"
+if [[ "$input_tar" == - ]]; then
+  { dd if="$tmp_dir/config.tar" bs=512 count="$config_blocks" status=none; cat; } | xz -T0 -6 -c > "$pending_output"
+else
+  { dd if="$tmp_dir/config.tar" bs=512 count="$config_blocks" status=none; cat "$input_tar"; } | xz -T0 -6 -c > "$pending_output"
+fi
 xz -t "$pending_output"
 tar -tJf "$pending_output" > "$tmp_dir/final-members"
 read -r first_member < "$tmp_dir/final-members"
@@ -94,6 +87,12 @@ if [[ "$first_member" != container.config ]]; then
   printf 'container.config is not the first rootfs archive entry.\n' >&2
   exit 1
 fi
+for member in etc/os-release usr/lib/systemd/systemd usr/bin/bash; do
+  if ! grep -Eq "(^|/)${member}$" "$tmp_dir/final-members"; then
+    printf 'Exported rootfs is missing required path: %s\n' "$member" >&2
+    exit 1
+  fi
+done
 
 mv -f -- "$pending_output" "$output_file"
 pending_output=""

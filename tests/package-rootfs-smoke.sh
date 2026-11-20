@@ -11,9 +11,10 @@ touch "$fixture/etc/os-release" "$fixture/usr/lib/systemd/systemd" "$fixture/usr
 tar --format=pax --owner=0 --group=0 --numeric-owner -cf "$tmp_dir/rootfs.tar" -C "$fixture" .
 
 "$ROOT_DIR/package-rootfs.sh" \
-  "$tmp_dir/rootfs.tar" \
+  - \
   "$tmp_dir/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz" \
-  'ghcr.io/armadaos-freedom/armadaos-freedom@sha256:test'
+  'ghcr.io/armadaos-freedom/armadaos-freedom@sha256:test' \
+  < "$tmp_dir/rootfs.tar"
 
 archive="$tmp_dir/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz"
 xz -t "$archive"

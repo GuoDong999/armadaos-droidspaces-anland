@@ -107,20 +107,16 @@ docker buildx build \
   "$BUILDER_SOURCE"
 
 container_id="$(docker create --platform linux/arm64 "$local_image" /bin/true)"
-docker export --output "$tmp_dir/rootfs.tar" "$container_id"
+docker start --attach "$container_id" >/dev/null
+docker export "$container_id" | env \
+  DROIDSPACES_TUI_REVISION="$tui_revision" \
+  ANLAND_REPOSITORY="$ANLAND_REPOSITORY" \
+  ANLAND_RELEASE_TAG="$ANLAND_RELEASE_TAG" \
+  ANLAND_PACKAGE_REVISION="$anland_revision" \
+  ANLAND_ARCHIVE_NAME="$anland_archive" \
+  ANLAND_ARCHIVE_SHA256="$anland_sha256" \
+  "$ROOT_DIR/package-rootfs.sh" - "$OUTPUT_FILE" "$ARMADA_IMAGE_SOURCE" "$tui_revision"
 docker rm "$container_id" >/dev/null
 container_id=''
 docker image rm "$local_image" >/dev/null
-
-DROIDSPACES_TUI_REVISION="$tui_revision" \
-ANLAND_REPOSITORY="$ANLAND_REPOSITORY" \
-ANLAND_RELEASE_TAG="$ANLAND_RELEASE_TAG" \
-ANLAND_PACKAGE_REVISION="$anland_revision" \
-ANLAND_ARCHIVE_NAME="$anland_archive" \
-ANLAND_ARCHIVE_SHA256="$anland_sha256" \
-  "$ROOT_DIR/package-rootfs.sh" \
-    "$tmp_dir/rootfs.tar" \
-    "$OUTPUT_FILE" \
-    "$ARMADA_IMAGE_SOURCE" \
-    "$tui_revision"
 printf 'Created %s\n' "$OUTPUT_FILE"
