@@ -1,0 +1,64 @@
+name: Publish ArmadaOS Anland RootFS Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful build workflow run ID whose artifact should be released
+        required: true
+        type: string
+        default: '44655248700'
+      release_tag:
+        description: Git tag and Release name
+        required: true
+        type: string
+        default: v0.1.0-anland.1
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    name: Publish verified rootfs release
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 90
+    steps:
+      - name: Download successful build artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name ArmadaOS-Freedom-Anland-Droidspaces-aarch64 \
+            --dir release-assets
+          find release-assets -maxdepth 1 -type f -printf '%f %s bytes\n'
+
+      - name: Verify rootfs checksum and provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release-assets
+          test -f ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz
+          test -f ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.sha256
+          test -f ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.source
+          sha256sum -c ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.sha256
+          grep -Fxq 'enable_anland=1' <(xzcat ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz | tar -xO container.config)
+          grep -Fxq 'enable_x11=0' <(xzcat ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz | tar -xO container.config)
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          gh release create "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "ArmadaOS Freedom Anland Droidspaces RootFS $RELEASE_TAG" \
+            --notes "ARM64 ArmadaOS Freedom Fedora 44 rootfs for Droidspaces with Wayland + Anland KDE support. The rootfs account is z and is password-locked in this release; enter as root and run passwd z on first start. This release was built by GitHub Actions and verified from its SHA-256 sidecar." \
+            release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz \
+            release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.sha256 \
+            release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.source

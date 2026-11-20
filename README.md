@@ -26,13 +26,15 @@ The packager puts Droidspaces' `container.config` first in the `.tar.xz`, valida
 
 The `.github/workflows/build-rootfs.yml` workflow is manually triggered from the repository's Actions tab. It uses a native ARM64 runner, checks for 40 GB free space, flattens ArmadaOS's OCI layers before the Docker build, and uploads the rootfs, SHA-256, and provenance as an artifact retained for one day. The repository plan must provide ARM64 runners and enough artifact storage.
 
-Before running the workflow, add the account password as the repository Actions secret `ROOTFS_PASSWORD` in **Settings → Secrets and variables → Actions**. Do not enter the password as a workflow input. The workflow passes it through a BuildKit secret mount; it is not included in build args or the Git repository. The default workflow username is `z` and can be changed through the `rootfs_username` input.
+The repository also has a manual **Publish ArmadaOS Anland RootFS Release** workflow. It downloads a successful build artifact by run ID, verifies the rootfs SHA-256 and Anland/X11 configuration, then creates a GitHub Release with the rootfs, checksum, and provenance files. The default source run is `44655248700` and the default tag is `v0.1.0-anland.1`; change them only when deliberately publishing another successful build.
+
+The GitHub workflow deliberately does not receive a password secret, so its `z` account stays locked. On first start, enter as root and run `passwd z` to choose a password. For a local build, `ROOTFS_PASSWORD` may be exported in the shell; BuildKit passes it as a secret mount rather than a build argument.
 
 ## Defaults and first start
 
 The generated configuration selects NAT, enables Anland Display and GPU Access, disables Termux:X11, and allows user namespaces for Plasma. The latter weakens container isolation; use this image only if you trust its root user.
 
-The rootfs account defaults to `z`. With a local `ROOTFS_PASSWORD`, the build passes it only via a BuildKit secret mount. The GitHub workflow does not upload or set that local password, so its `z` account stays locked; on first start enter as root and run `passwd z` to choose a password. SDDM is masked because the Android host owns display startup; the systemd default target is `multi-user.target`.
+SDDM is masked because the Android host owns display startup; the systemd default target is `multi-user.target`.
 
 On Android, install the Droidspaces-supported Anland 5.x APK, grant it root access, and complete Anland's one-time host setup. In the container settings leave GPU Access and Anland Display on and Termux:X11 off. Start the container, open its Anland launch action, then run `start-desktop-session` as `z` in the container terminal to launch `startplasma-wayland`.
 
