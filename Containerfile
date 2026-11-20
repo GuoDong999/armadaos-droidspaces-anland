@@ -45,10 +45,41 @@ for group in input video tty wheel audio render; do
     getent group "$group" >/dev/null && usermod -aG "$group" root || true
     getent group "$group" >/dev/null && usermod -aG "$group" "$USERNAME" || true
 done
+# Match the reference Armada container's graphical/input/audio groups.
+getent group pipewire >/dev/null || groupadd -r pipewire
+getent group gamemode >/dev/null || groupadd -r gamemode
+input_device_group="$(getent group 1004 | cut -d: -f1)"
+if [ -z "$input_device_group" ]; then groupadd -g 1004 -r armada-input; input_device_group=armada-input; fi
+for group in pipewire gamemode seat "$input_device_group"; do
+    getent group "$group" >/dev/null && usermod -aG "$group" "$USERNAME" || true
+done
 id "$USERNAME" >/dev/null 2>&1 || { echo "Missing upstream ArmadaOS account: $USERNAME" >&2; exit 1; }
 usermod -aG aid_inet,aid_net_raw,aid_net_admin,droidspaces-gpu root
 usermod -aG aid_inet,aid_net_raw,aid_net_admin,droidspaces-gpu "$USERNAME"
 passwd -l "$USERNAME"
+# Droidspaces supplies the Android host kernel, not an OSTree deployment.
+rm -rf /sysroot /ostree /boot/efi /boot/loader* /boot/grub2 /boot/ostree /run/ostree-booted
+for unit in \
+    armada-bootimg-sync.service armada-esp-rename.service armada-boot-hotkeys.service \
+    armada-installer-visibility.service armada-update-reserve.service armada-fixups.service \
+    armada-device-quirks.service armada-input-calibration.service armada-controller-type.service \
+    armada-rgb.service armada-rgb-brightness-watch.service armada-rgb-brightness-watch.path \
+    armada-splash-early.service armada-splash-stall.service armada-splash-reboot-screen.service \
+    armada-splash-poweroff-screen.service usr-share-guestos-android.mount armada-waydroid-input.service \
+    waydroid-container.service jupiter-biosupdate armada-steam-default-session.service \
+    armada-steamapps.service armada-flatpak-setup.service armada-mtp.service inputplumber.service \
+    armada-powerd.service steamos-manager-session-cleanup.service armada-steam-charging-eta.service \
+    bootc-generic-growpart.service var-lib-nfs-rpc_pipefs.mount chronyd.service \
+    bootc-fetch-apply-updates.timer bootloader-update.service irqbalance.service \
+    systemd-backlight@.service systemd-hibernate.service systemd-hybrid-sleep.service \
+    systemd-suspend-then-hibernate.service flatpak-add-fedora-repos.service \
+    armada-save-devcoredump@.service armada-guestos.service bluetooth.service; do
+    ln -sf /dev/null "/etc/systemd/system/$unit"
+done
+mkdir -p /etc/systemd/user
+for unit in steamos-manager-configure-cecd.service armada-steam-default-session.service armada-steam-charging-eta.service; do
+    ln -sf /dev/null "/etc/systemd/user/$unit"
+done
 sed -i 's/^hosts:.*/hosts: files dns myhostname/' /etc/nsswitch.conf
 
 mkdir -p \
@@ -757,6 +788,7 @@ RUN <<'EOF_ENABLE_SESSION'
 set -eux
 test -x /usr/libexec/armada/armada-plasma-session
 bash -n /usr/libexec/armada/steam-anland-env
+install -d /etc/gamescope-session-plus/sessions.d
 printf '\nsource /usr/libexec/armada/steam-anland-env\n' >> /etc/gamescope-session-plus/sessions.d/steam
 printf '\nMESA_LOADER_DRIVER_OVERRIDE=kgsl\nGALLIUM_DRIVER=kgsl\nFD_FORCE_KGSL=1\n' >> /etc/environment
 python3 /tmp/patch-armada-plasma-session.py /usr/libexec/armada/armada-plasma-session
@@ -1020,10 +1052,6 @@ rm -rf /var/cache/dnf/* /var/cache/libdnf5/* 2>/dev/null || true
 # The installed compositor must still work without the compiler stack.
 /usr/bin/gamescope --help >/dev/null
 EOF_RUN
-
-# 9b. Rebuild entrypoint.
-# The anland tree stays so gamescope can be rebuilt inside a running container.
-# Inputs are fetched again per run and deleted on exit, exactly as above.
 
 COPY --from=armada-adapter /scripts/install-mesa.sh /usr/local/sbin/install-mesa
 RUN bash -euo pipefail -c 'cp /etc/os-release /tmp/droidspaces-os-release; sed -i -E "s/^ID=\\\"?armada\\\"?$/ID=fedora/" /etc/os-release; /usr/local/sbin/install-mesa --1; cp /tmp/droidspaces-os-release /etc/os-release'
