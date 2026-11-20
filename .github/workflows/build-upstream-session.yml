@@ -1,0 +1,56 @@
+name: Build upstream ArmadaOS Freedom Anland session
+
+on:
+  workflow_dispatch:
+    inputs:
+      armada_image:
+        description: Pinned ArmadaOS Freedom image
+        required: true
+        default: ghcr.io/armadaos-freedom/armadaos-freedom@sha256:26e4e9d4b76cb194c8852daada2d257ab7e20078611dd2a6bb2911fe4f6a6a46
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check out the complete reference display implementation
+        uses: actions/checkout@v5
+        with:
+          repository: sjszero/Droidspaces-rootfs-KDE-builder
+          ref: 4d780fd8bd999eb8ddaa1303b4714ba785ec6174
+          path: reference
+      - name: Reclaim runner disk
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/share/powershell /usr/local/share/chromium
+          sudo apt-get clean
+          docker system prune --all --force
+          df -h /
+      - name: Use the unmodified reference ArmadaOS build recipe
+        working-directory: reference
+        run: |
+          set -eux
+          ./build_rootfs-native.sh \
+            -i ArmadaOS.Dockerfile -v upstream-4d780fd \
+            -K KDE -L true -B anland-wayland -P none \
+            -g false -a false -b false -c true -d false -e false \
+            -f false -h false -n false -S false -t false -u armada
+      - name: Package the reference rootfs for this repository
+        env:
+          ARMADA_IMAGE_SOURCE: ${{ inputs.armada_image }}
+        run: |
+          set -eux
+          archive="$(find reference -maxdepth 1 -name 'ArmadaOS-kde-*-Droidspaces-rootfs-aarch64-*.tar.xz' -print -quit)"
+          test -n "$archive"
+          mkdir -p dist
+          ./package-rootfs.sh <(tar -xOf "$archive" container.config >/dev/null; xzcat "$archive") \
+            dist/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz "$ARMADA_IMAGE_SOURCE" upstream-reference-4d780fd8bd999eb8ddaa1303b4714ba785ec6174
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ArmadaOS-Freedom-Anland-Droidspaces-aarch64
+          path: dist/*
+          retention-days: 1
+          compression-level: 0
