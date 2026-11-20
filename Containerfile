@@ -812,7 +812,7 @@ grep -q armada_wait_gamescope_startup /usr/share/gamescope-session-plus/gamescop
 # The Freedom image's gamescope is replaced by the pinned Anland build below.
 EOF_ENABLE_SESSION
 
-ARG ANLAND_REPOSITORY=https://github.com/SuperTurtleDev/anland.git
+ARG ANLAND_SOURCE_REPOSITORY=https://github.com/SuperTurtleDev/anland.git
 ARG ANLAND_BRANCH=legacy
 ARG TERRA_REPOSITORY=https://github.com/terrapkg/packages.git
 ARG TERRA_COMMIT=23ec8c9aeaad28179925232fe7564f80da06d4ab
@@ -959,7 +959,7 @@ PC
 
 # anland tree (kept)
 rm -rf "$ANLAND"
-git clone --quiet --branch "$ANLAND_BRANCH" "$ANLAND_REPOSITORY" "$ANLAND"
+git clone --quiet --branch "$ANLAND_BRANCH" "$ANLAND_SOURCE_REPOSITORY" "$ANLAND"
 # anland carries the port itself (a local commit above origin/legacy): its build.sh already pins
 # gamescope afd6eac / 3.16.31-ogc1 and the 40 Armada patches, and its own
 # gamescope.patch is the rebased copy. Nothing is rewritten from here any more;
