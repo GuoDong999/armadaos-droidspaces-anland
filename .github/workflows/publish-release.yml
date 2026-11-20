@@ -4,15 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       source_run_id:
-        description: Successful build workflow run ID whose artifact should be released
+        description: Successful armada-account build run ID; do not use the legacy z run
         required: true
         type: string
-        default: '44655248700'
       release_tag:
         description: Git tag and Release name
         required: true
         type: string
-        default: v0.1.0-anland.1
+        default: v0.1.0-anland.2
 
 permissions:
   actions: read
@@ -88,7 +87,7 @@ jobs:
           gh release create "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
             --title "ArmadaOS Freedom Anland Droidspaces RootFS $RELEASE_TAG" \
-            --notes "ARM64 ArmadaOS Freedom Fedora 44 rootfs for Droidspaces with Wayland + Anland KDE support. The rootfs account is z and is password-locked in this release; enter as root and run passwd z on first start. Download all .part-* assets plus the checksum files and assemble with ./assemble-rootfs-release.sh. The script verifies each part and the complete rootfs SHA-256." \
+            --notes "ARM64 ArmadaOS Freedom Fedora 44 rootfs for Droidspaces with Wayland + Anland KDE support. The rootfs account is armada and is password-locked in this release; enter as root and run passwd armada on first start. This is the restored ArmadaOS account build; the previous v0.1.0-anland.1 release used z. Download all .part-* assets plus the checksum files and assemble with ./assemble-rootfs-release.sh. The script verifies each part and the complete rootfs SHA-256." \
             release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.part-* \
             release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.sha256 \
             release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.parts.sha256 \

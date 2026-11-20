@@ -12,7 +12,7 @@ on:
         description: Linux account name inside the rootfs
         required: true
         type: string
-        default: z
+        default: armada
 
 permissions:
   contents: read
@@ -80,7 +80,6 @@ jobs:
           ARMADA_IMAGE: armadaos-freedom:flattened
           ARMADA_IMAGE_SOURCE: ${{ inputs.armada_image }}
           ROOTFS_USERNAME: ${{ inputs.rootfs_username }}
-          ROOTFS_PASSWORD: ${{ secrets.ROOTFS_PASSWORD }}
         run: ./build-rootfs.sh
 
       - name: Upload rootfs artifact
