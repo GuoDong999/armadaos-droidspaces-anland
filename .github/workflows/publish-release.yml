@@ -24,6 +24,9 @@ jobs:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 90
     steps:
+      - name: Check out release helper
+        uses: actions/checkout@v5
+
       - name: Download successful build artifact
         env:
           GH_TOKEN: ${{ github.token }}
@@ -58,6 +61,24 @@ jobs:
           grep -Fxq 'enable_x11=0' release-assets/container.config
           rm -f release-assets/verified.sha256 release-assets/members release-assets/container.config
 
+      - name: Split rootfs under GitHub asset size limit
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release-assets
+          rootfs=ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz
+          split -b 1800M -d -a 2 "$rootfs" "$rootfs.part-"
+          shopt -s nullglob
+          parts=("$rootfs".part-*)
+          shopt -u nullglob
+          ((${#parts[@]} > 0))
+          sha256sum "${parts[@]}" > "$rootfs.parts.sha256"
+          cp "$GITHUB_WORKSPACE/scripts/assemble-rootfs-release.sh" .
+          chmod 0755 assemble-rootfs-release.sh
+          printf 'Release contains %d rootfs parts. Reassemble with: ./assemble-rootfs-release.sh . ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz\n' \
+            "${#parts[@]}" > ASSEMBLE.txt
+          ls -lh "${parts[@]}" "$rootfs.sha256" "$rootfs.parts.sha256" "$rootfs.source" assemble-rootfs-release.sh ASSEMBLE.txt
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -67,7 +88,10 @@ jobs:
           gh release create "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
             --title "ArmadaOS Freedom Anland Droidspaces RootFS $RELEASE_TAG" \
-            --notes "ARM64 ArmadaOS Freedom Fedora 44 rootfs for Droidspaces with Wayland + Anland KDE support. The rootfs account is z and is password-locked in this release; enter as root and run passwd z on first start. This release was built by GitHub Actions and verified from its SHA-256 sidecar." \
-            release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz \
+            --notes "ARM64 ArmadaOS Freedom Fedora 44 rootfs for Droidspaces with Wayland + Anland KDE support. The rootfs account is z and is password-locked in this release; enter as root and run passwd z on first start. Download all .part-* assets plus the checksum files and assemble with ./assemble-rootfs-release.sh. The script verifies each part and the complete rootfs SHA-256." \
+            release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.part-* \
             release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.sha256 \
-            release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.source
+            release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.parts.sha256 \
+            release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.source \
+            release-assets/assemble-rootfs-release.sh \
+            release-assets/ASSEMBLE.txt
