@@ -51,7 +51,9 @@ The rootfs account is restored to the upstream `armada` user. Its password is lo
 
 The ArmadaOS Anland KDE builder documents two requirements for its standalone Plasma session: KWin must receive the Anland producer environment (`ANLAND`, `ANLAND_SOCKET`, render node and KGSL Mesa selection), and Plasma must start inside a D-Bus session. A bare `startplasma-wayland` does neither reliably. This adapter's `start-desktop-session` wrapper now checks that `/run/display.sock` exists, exports the required Anland variables, and starts Plasma with `dbus-run-session`. If it reports that the socket is missing, open the container's Anland Display in Droidspaces first. The rebuilt rootfs still needs a real-device display check before Anland can be called hardware-verified.
 
-On Android, install the Droidspaces-supported Anland 5.x APK, grant it root access, and complete Anland's one-time host setup. In the container settings leave GPU Access and Anland Display on and Termux:X11 off. Start the container, open its Anland launch action, then run `start-desktop-session` as `armada` in the container terminal to launch `startplasma-wayland`.
+The restored Armada container session starts automatically through SDDM. Do not mask SDDM or run a bare startplasma-wayland; the Armada-specific session scripts provide the producer environment and D-Bus bus. Select desktop mode with `/usr/libexec/armada/container-request desktop`, or game mode with `... gamemode`. The Anland Android display must be opened to create `/run/display.sock`; startup waits for it.
+
+The `.4` configuration incorporates the reference project's SDDM, VT workaround, Armada session switching, gamescope producer startup and restart, and Mesa driver installation. This is a different session stack from `.3`; test the new rootfs rather than reusing an existing container's old services.
 
 ## Known Limits
 

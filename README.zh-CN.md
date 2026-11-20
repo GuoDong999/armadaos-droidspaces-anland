@@ -25,7 +25,9 @@ chmod +x assemble-rootfs-release.sh
 2. 在容器设置中启用 **GPU Access** 和 **Anland Display**，关闭 **Configure Termux:X11**。Anland 与 Termux:X11 使用不同显示路径，不要同时开启。
 3. 从 Droidspaces RootFS 管理界面导入重组后的 `.tar.xz` 并启动容器。
 4. 新版默认使用上游 `armada` 账户，密码锁定。以 root 进入容器后运行 `passwd armada` 设置密码。
-5. 打开容器的 Anland 启动入口；在容器终端以 `armada` 执行 `start-desktop-session`，启动 `startplasma-wayland`。
+新版默认自动通过 SDDM 启动 Armada 图形会话。不要再屏蔽 SDDM，也不要直接运行裸 `startplasma-wayland`；Armada 会话脚本负责 Anland 环境及 D-Bus。进入容器后可执行 `/usr/libexec/armada/container-request desktop` 切换到 KDE，或执行 `/usr/libexec/armada/container-request gamemode` 切换到 Steam gamescope。启动前请在 Droidspaces 打开 Anland Display，启动脚本会等待 `/run/display.sock`。
+
+`.4` 版移植参考项目的 SDDM、容器 VT 处理、Armada 会话切换、gamescope 启动与自动恢复、Mesa 驱动安装，不再沿用 `.3` 的通用启动脚本。必须导入新 rootfs，旧容器中的服务配置不会自动升级。
 
 镜像默认启用 NAT、Anland 显示、GPU Access 和 user namespaces；Termux:X11 关闭。允许 user namespaces 可能降低容器隔离强度，请只对可信容器启用。
 
