@@ -10,7 +10,7 @@ Droidspaces 使用 Android 宿主机内核，所以 ArmadaOS 的设备内核、�
 
 当前已发布的旧版 [v0.1.0-anland.1](https://github.com/GuoDong999/armadaos-droidspaces-anland/releases/tag/v0.1.0-anland.1) 使用的 Linux 用户名是 `z`。该版本密码锁定；首次启动后以 root 运行 `passwd z` 设置密码。
 
-恢复上游账户 `armada` 的新版会以 `v0.1.0-anland.2` 发布。rootfs 超过 GitHub Release 单个附件的 2 GiB 限制，因此分成多个 `.part-*` 分卷。下载所有 rootfs 分卷、两份 SHA-256 清单、`.source` 来源记录以及 `assemble-rootfs-release.sh`，放在同一目录后运行：
+恢复上游账户 `armada`、包含 Anland Plasma 黑屏修复的新构建计划以 `v0.1.0-anland.3` 发布。rootfs 超过 GitHub Release 单个附件的 2 GiB 限制，因此分成多个 `.part-*` 分卷。下载所有 rootfs 分卷、两份 SHA-256 清单、`.source` 来源记录以及 `assemble-rootfs-release.sh`，放在同一目录后运行：
 
 ```bash
 chmod +x assemble-rootfs-release.sh

@@ -30,7 +30,7 @@ The `.github/workflows/build-rootfs.yml` workflow is manually triggered from the
 
 ## Release Download
 
-Release `v0.1.0-anland.1` is the earlier build with username `z`. The restored-account build will use `armada` and a new release tag. The repository is now public, so its releases and assets are publicly accessible.
+Release `v0.1.0-anland.1` is the earlier build with username `z`; `v0.1.0-anland.2` predates the standalone Plasma Anland black-screen fix. The restored-account, black-screen-fix build will use `v0.1.0-anland.3`. The repository is public, so releases and assets are publicly accessible.
 
 Because GitHub limits an individual Release asset to less than 2 GiB, the rootfs is published as multiple `.part-*` files. Download every rootfs part, both SHA-256 manifests, the `.source` provenance, and `assemble-rootfs-release.sh` into one directory. Reassemble and verify the parts with:
 

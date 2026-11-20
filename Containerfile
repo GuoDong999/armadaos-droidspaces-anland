@@ -16,7 +16,7 @@ USER 0
 RUN <<'EOF_RUN'
 set -euxo pipefail
 
-dnf5 -y install dhcp-client dbus-daemon
+dnf5 -y install --setopt=install_weak_deps=False dhcp-client dbus-daemon binutils
 dnf5 clean all
 
 for group in aid_inet:3003 aid_net_raw:3004 aid_net_admin:3005; do
@@ -144,7 +144,7 @@ RUN --mount=type=bind,from=anland-kde,target=/run/anland-kde,ro \
     test -x /usr/local/bin/start-desktop-session && \
     test -x /usr/bin/dbus-run-session && \
     rpm -q --qf '%{RELEASE}\n' kwin kwin-common kwin-libs | grep -q '\.anland\.' && \
-    strings /usr/bin/kwin_wayland | grep -q 'AnlandBackend'
+    /usr/bin/strings /usr/bin/kwin_wayland | grep -q 'AnlandBackend'
 
 RUN rm -f \
       /usr/local/sbin/configure-chrome \
