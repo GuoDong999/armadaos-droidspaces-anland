@@ -18,7 +18,7 @@ tar --format=pax --owner=0 --group=0 --numeric-owner -cf "$tmp_dir/rootfs.tar" -
 
 archive="$tmp_dir/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz"
 xz -t "$archive"
-sha256sum -c "$archive.sha256"
+(cd "$tmp_dir" && sha256sum -c ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.sha256)
 tar -tJf "$archive" > "$tmp_dir/final-members"
 read -r first_member < "$tmp_dir/final-members"
 [[ "$first_member" == container.config ]]

@@ -96,7 +96,7 @@ done
 
 mv -f -- "$pending_output" "$output_file"
 pending_output=""
-sha256sum "$output_file" > "$output_file.sha256"
+(cd -- "$(dirname -- "$output_file")" && sha256sum "$(basename -- "$output_file")" > "$(basename -- "$output_file").sha256")
 {
   printf 'ARMADA_IMAGE=%s\n' "$image_reference"
   printf 'DROIDSPACES_TUI_REVISION=%s\n' "$tui_revision"

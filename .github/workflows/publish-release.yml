@@ -41,13 +41,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cd release-assets
-          test -f ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz
-          test -f ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.sha256
-          test -f ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.source
-          sha256sum -c ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.sha256
-          grep -Fxq 'enable_anland=1' <(xzcat ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz | tar -xO container.config)
-          grep -Fxq 'enable_x11=0' <(xzcat ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz | tar -xO container.config)
+          rootfs=release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz
+          checksum=release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.sha256
+          provenance=release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz.source
+          test -f "$rootfs"
+          test -f "$checksum"
+          test -f "$provenance"
+          # Older build artifacts record the original dist/ path in the sidecar.
+          sed 's#  dist/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz#  release-assets/ArmadaOS-Freedom-Droidspaces-aarch64.tar.xz#' \
+            "$checksum" > release-assets/verified.sha256
+          sha256sum -c release-assets/verified.sha256
+          tar -tJf "$rootfs" > release-assets/members
+          grep -Fxq container.config release-assets/members
+          tar -xOf "$rootfs" container.config > release-assets/container.config
+          grep -Fxq 'enable_anland=1' release-assets/container.config
+          grep -Fxq 'enable_x11=0' release-assets/container.config
+          rm -f release-assets/verified.sha256 release-assets/members release-assets/container.config
 
       - name: Create GitHub Release
         env:
