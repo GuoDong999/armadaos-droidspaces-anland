@@ -16,7 +16,7 @@ USER 0
 RUN <<'EOF_RUN'
 set -euxo pipefail
 
-dnf5 -y install dhcp-client
+dnf5 -y install dhcp-client dbus-daemon
 dnf5 clean all
 
 for group in aid_inet:3003 aid_net_raw:3004 aid_net_admin:3005; do
@@ -122,6 +122,8 @@ RUN --mount=type=bind,source=scripts,target=/run/droidspaces-scripts \
       cp -a "$staging"/. /; \
       rm -rf "$staging"'
 
+COPY --chmod=0755 scripts/start-anland-kde-session.sh /usr/local/bin/start-desktop-session
+
 RUN --mount=type=bind,from=anland-kde,target=/run/anland-kde,ro \
     cp -a /run/anland-kde/. /tmp/anland-kde.ArmadaDroidspaces && \
     ANLAND_KDE_RELEASE_REPOSITORY="$ANLAND_REPOSITORY" \
@@ -133,10 +135,17 @@ RUN --mount=type=bind,from=anland-kde,target=/run/anland-kde,ro \
     rm -rf /tmp/anland-kde.ArmadaDroidspaces && \
     /usr/local/sbin/configure-desktop "$DESKTOP" "$DISPLAY_BACKEND" "$DESKTOP_AUTOSTART" "$USERNAME" && \
     mkdir -p /usr/share/armada && \
-    printf 'DROIDSPACES_TUI_REVISION=%s\nANLAND_REPOSITORY=%s\nANLAND_RELEASE_TAG=%s\nANLAND_PACKAGE_REVISION=%s\nANLAND_ARCHIVE_NAME=%s\nANLAND_ARCHIVE_SHA256=%s\n' \
+    printf 'DROIDSPACES_TUI_REVISION=%s\nANLAND_REPOSITORY=%s\nANLAND_RELEASE_TAG=%s\nANLAND_PACKAGE_REVISION=%s\nANLAND_ARCHIVE_NAME=%s\nANLAND_ARCHIVE_SHA256=%s\nROOTFS_USERNAME=%s\n' \
       "$DROIDSPACES_TUI_REVISION" "$ANLAND_REPOSITORY" "$ANLAND_RELEASE_TAG" \
-      "$ANLAND_PACKAGE_REVISION" "$ANLAND_ARCHIVE_NAME" "$ANLAND_ARCHIVE_SHA256" \
-      > /usr/share/armada/droidspaces-rootfs-build-info
+      "$ANLAND_PACKAGE_REVISION" "$ANLAND_ARCHIVE_NAME" "$ANLAND_ARCHIVE_SHA256" "$USERNAME" \
+      > /usr/share/armada/droidspaces-rootfs-build-info && \
+    getent passwd "$USERNAME" >/dev/null && \
+    awk -F: -v account="$USERNAME" '$1 == account && $2 ~ /^!/ { found=1 } END { exit !found }' /etc/shadow && \
+    test -x /usr/local/bin/start-desktop-session && \
+    test -x /usr/bin/dbus-run-session && \
+    grep -q 'ANLAND=1' /usr/local/bin/start-desktop-session && \
+    grep -q 'dbus-run-session' /usr/local/bin/start-desktop-session && \
+    /usr/bin/kwin_wayland --help 2>&1 | grep -q -- '--anland'
 
 RUN rm -f \
       /usr/local/sbin/configure-chrome \

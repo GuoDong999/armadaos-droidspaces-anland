@@ -45,7 +45,11 @@ The script verifies each part, joins them in order, and verifies the complete ro
 
 The generated configuration selects NAT, enables Anland Display and GPU Access, disables Termux:X11, and allows user namespaces for Plasma. The latter weakens container isolation; use this image only if you trust its root user.
 
-The restored rootfs account is the upstream `armada` user. Its password is locked. On first start, enter as root and run `passwd armada` to set a password. SDDM is masked because the Android host owns display startup; the systemd default target is `multi-user.target`.
+The rootfs account is restored to the upstream `armada` user. Its password is locked. On first start, enter as root and run `passwd armada` to set a password. SDDM is masked because the Android host owns display startup; the systemd default target is `multi-user.target`.
+
+## Anland Black Screen
+
+The ArmadaOS Anland KDE builder documents two requirements for its standalone Plasma session: KWin must receive the Anland producer environment (`ANLAND`, `ANLAND_SOCKET`, render node and KGSL Mesa selection), and Plasma must start inside a D-Bus session. A bare `startplasma-wayland` does neither reliably. This adapter's `start-desktop-session` wrapper now checks that `/run/display.sock` exists, exports the required Anland variables, and starts Plasma with `dbus-run-session`. If it reports that the socket is missing, open the container's Anland Display in Droidspaces first. The rebuilt rootfs still needs a real-device display check before Anland can be called hardware-verified.
 
 On Android, install the Droidspaces-supported Anland 5.x APK, grant it root access, and complete Anland's one-time host setup. In the container settings leave GPU Access and Anland Display on and Termux:X11 off. Start the container, open its Anland launch action, then run `start-desktop-session` as `armada` in the container terminal to launch `startplasma-wayland`.
 

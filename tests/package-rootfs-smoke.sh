@@ -37,4 +37,16 @@ split -b 1024 -d -a 2 "$archive" "$archive.part-"
 "$ROOT_DIR/scripts/assemble-rootfs-release.sh" \
     "$tmp_dir" "$tmp_dir/reassembled.tar.xz"
 cmp "$archive" "$tmp_dir/reassembled.tar.xz"
+
+session_helper="$ROOT_DIR/scripts/start-anland-kde-session.sh"
+bash -n "$session_helper"
+for setting in 'export ANLAND=1' 'export ANLAND_SOCKET=' 'export ANLAND_DRM_DEVICE=' \
+    'export MESA_LOADER_DRIVER_OVERRIDE=' 'dbus-run-session' '/usr/bin/startplasma-wayland'; do
+  grep -Fq -- "$setting" "$session_helper"
+done
+if ANLAND_SOCKET="$tmp_dir/not-a-socket" "$session_helper" > "$tmp_dir/session.log" 2>&1; then
+  printf 'Anland launcher accepted a missing display socket.\n' >&2
+  exit 1
+fi
+grep -Fq 'Anland display socket is not ready' "$tmp_dir/session.log"
 printf 'package smoke test passed\n'

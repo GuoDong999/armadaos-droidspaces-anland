@@ -25,9 +25,15 @@ chmod +x assemble-rootfs-release.sh
 2. 在容器设置中启用 **GPU Access** 和 **Anland Display**，关闭 **Configure Termux:X11**。Anland 与 Termux:X11 使用不同显示路径，不要同时开启。
 3. 从 Droidspaces RootFS 管理界面导入重组后的 `.tar.xz` 并启动容器。
 4. 新版默认使用上游 `armada` 账户，密码锁定。以 root 进入容器后运行 `passwd armada` 设置密码。
-5. 打开容器的 Anland 启动入口，在容器终端以 `armada` 执行 `start-desktop-session`，启动 `startplasma-wayland`。
+5. 打开容器的 Anland 启动入口；在容器终端以 `armada` 执行 `start-desktop-session`，启动 `startplasma-wayland`。
 
-默认容器配置为 NAT 网络、Anland 显示、GPU Access 和 user namespaces；Termux:X11 关闭。允许 user namespaces 会降低容器隔离强度，请只对可信容器启用。
+镜像默认启用 NAT、Anland 显示、GPU Access 和 user namespaces；Termux:X11 关闭。允许 user namespaces 可能降低容器隔离强度，请只对可信容器启用。
+
+## Anland 黑屏排查
+
+参考项目的 ArmadaOS 维护记录指出，独立 Plasma 会话至少需要两项：KWin 必须收到 Anland producer 环境变量（`ANLAND`、`ANLAND_SOCKET`、render node 和 KGSL Mesa 选择），并且 Plasma 必须在 D-Bus session 中启动。只执行裸 `startplasma-wayland` 可能使 KWin 回退到容器内不存在的 DRM/KMS 设备，或使 Plasma 因没有 session bus 而立即退出。
+
+本项目的 `start-desktop-session` 已改为检查 `/run/display.sock`，导出 Anland 环境并通过 `dbus-run-session` 启动 Plasma。如果提示 socket 不存在，先在 Droidspaces 打开容器的 Anland Display。新构建仍需在目标设备上实测画面，确认 GPU 和宿主 Anland 服务兼容后才能视为验证通过。
 
 ## 本地构建
 
