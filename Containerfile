@@ -122,7 +122,7 @@ RUN --mount=type=bind,source=scripts,target=/run/droidspaces-scripts \
       cp -a "$staging"/. /; \
       rm -rf "$staging"'
 
-COPY --chmod=0755 scripts/start-anland-kde-session.sh /usr/local/bin/start-desktop-session
+COPY --from=armada-adapter --chmod=0755 /scripts/start-anland-kde-session.sh /usr/local/bin/start-desktop-session
 
 RUN --mount=type=bind,from=anland-kde,target=/run/anland-kde,ro \
     cp -a /run/anland-kde/. /tmp/anland-kde.ArmadaDroidspaces && \

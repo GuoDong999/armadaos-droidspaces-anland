@@ -84,6 +84,7 @@ docker buildx build \
   --platform linux/arm64 \
   --build-context "droidspaces-tui=$tui_dir" \
   --build-context "anland-kde=$anland_context" \
+  --build-context "armada-adapter=$ROOT_DIR" \
   --build-arg "ARMADA_IMAGE=$ARMADA_IMAGE" \
   --build-arg "DROIDSPACES_TUI_REVISION=$tui_revision" \
   --build-arg "ANLAND_REPOSITORY=$ANLAND_REPOSITORY" \
